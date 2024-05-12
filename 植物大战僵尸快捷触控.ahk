@@ -28,6 +28,8 @@ SetKeyDelay -1, 50
 SetWorkingDir %A_ScriptDir%
 CoordMode, Mouse, Window
 
+STOPMOD:=0
+
 IfExist, %A_ScriptDir%\设置.ini ;如果配置文件存在则读取
 {
   IniRead, X1, 设置.ini, 设置, X1
@@ -44,7 +46,7 @@ else
   IniWrite, %Y%, 设置.ini, 设置, Y
 }
 SoundPlay, Speech On.wav
-MsgBox Ready
+MsgBox, , 杂交版快捷触控, 黑钨重工出品 免费开源 请勿商用 侵权必究`n请搭配Winlator的输入控制使用,导入icp文件后再打开模拟器`n长按数字1设置左边卡槽位置`n长按数字4设置右边卡槽位置`n`n使用教程:`n可以使用外接键盘`n数字4 左键`n数字5 暂停快速种植模式
 return
 
 NewLeft(){
@@ -158,161 +160,331 @@ Class 后台 {
   ;-- 类结束
 }
 
-~Left::
+~1::
+JS:=A_TickCount
+Loop
+{
+  Sleep 30
+  if (A_TickCount-JS>2000)
+  {
+    NewLeft()
+    Break
+  }
+  if !GetKeyState("1", "P")
+  {
+    Break
+  }
+}
+return
+
 ~4::
-NewLeft()
+Send {LButton Down}
+JS:=A_TickCount
+Loop
+{
+  Sleep 30
+  if (A_TickCount-JS>2000)
+  {
+    NewRight()
+    Break
+  }
+  if !GetKeyState("4", "P")
+  {
+    Break
+  }
+}
+Send {LButton Up}
 return
 
-~Right::
 ~5::
-NewRight()
+if (STOPMOD=0)
+{
+  STOPMOD:=1
+  Send {Esc}
+}
+else
+{
+  STOPMOD:=0
+  Send {Esc}
+}
 return
-
-; ~6::
-; SetTimer, tt, 100
-; return
-
-; tt:
-; MouseGetPos, OX, OY
-; ToolTip, X%OX% Y%OY%
-; return
 
 ~q::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1, Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, q
 return
 
 ~w::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*1), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, w
 return
 
 ~e::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*2), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, e
 return
 
 ~r::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*3), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, r
 return
 
 ~t::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*4), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, t
 return
 
 ~a::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*5), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, a
 return
 
 ~s::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*6), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, s
 return
 
 ~d::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*7), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, d
 return
 
 ~f::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*8), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, f
 return
 
 ~g::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*9), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, g
 return
 
 ~z::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*10), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, z
 return
 
 ~x::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*11), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, x
 return
 
 ~c::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*12), Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, c
 return
 
 ~v::
 BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 MouseGetPos, , , WinID
 后台.点击左键(WinID, X2, Y)
 Sleep 50
 Send {LButton}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+}
 BlockInput, Off
 KeyWait, v
 return
