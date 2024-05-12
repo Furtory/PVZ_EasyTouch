@@ -61,7 +61,7 @@ NewLeft(){
 NewRight(){
   global
   MouseGetPos, X2, Y
-  IniWrite, %X2%, 设置.ini, 设置, X1
+  IniWrite, %X2%, 设置.ini, 设置, X2
   SoundPlay, Speech On.wav
   return
 }
