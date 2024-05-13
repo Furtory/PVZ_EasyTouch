@@ -26,9 +26,10 @@ SendMode Input
 SetBatchLines -1
 SetKeyDelay -1, 50
 SetWorkingDir %A_ScriptDir%
-CoordMode, Mouse, Window
+CoordMode, Mouse, Client
 
 STOPMOD:=0
+KeyDownJS:=0
 
 IfExist, %A_ScriptDir%\设置.ini ;如果配置文件存在则读取
 {
@@ -46,7 +47,7 @@ else
   IniWrite, %Y%, 设置.ini, 设置, Y
 }
 SoundPlay, Speech On.wav
-MsgBox, , 杂交版快捷触控, 黑钨重工出品 免费开源 请勿商用 侵权必究`n请搭配Winlator的输入控制使用,导入icp文件后再打开模拟器`n长按数字1设置左边卡槽位置`n长按数字4设置右边卡槽位置`n`n使用教程:`n可以使用外接键盘`n数字4 左键`n数字5 暂停快速种植模式
+MsgBox, , 杂交版快捷触控, 黑钨重工出品 免费开源 请勿商用 侵权必究`n请搭配Winlator的输入控制使用,导入icp文件后再打开模拟器`n长按数字1设置左边卡槽位置`n长按数字4设置右边卡槽位置`n`n使用教程:`n可以使用外接键盘`n数字1瞄准键 铲子 可在自动暂停模式下铲掉鼠标下的植物`n数字4箭头下 左键 可在自动暂停模式下长按控制加农炮`n数字5暂停 自动暂停快速种植模式`n数字6回复 自动暂停失败重新暂停`n数字7隐藏 如果菜单没有隐藏重新隐藏
 return
 
 NewLeft(){
@@ -161,11 +162,27 @@ Class 后台 {
 }
 
 ~1::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
+BlockInput, On
 JS:=A_TickCount
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 Loop
 {
   Sleep 30
-  if (A_TickCount-JS>2000)
+  if (A_TickCount-JS>2000) and (STOPMOD=0)
   {
     NewLeft()
     Break
@@ -175,15 +192,44 @@ Loop
     Break
   }
 }
+if (STOPMOD=1)
+{
+  Send {LButton}
+  Sleep 10
+  Send {Esc}
+  HideMenu()
+}
+BlockInput, Off
 return
 
 ~4::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
+BlockInput, On
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
+}
 Send {LButton Down}
+if (STOPMOD=1)
+{
+  Sleep 50
+  Send {LButton Up}
+}
 JS:=A_TickCount
 Loop
 {
   Sleep 30
-  if (A_TickCount-JS>2000)
+  if (A_TickCount-JS>2000) and (STOPMOD=0)
   {
     NewRight()
     Break
@@ -193,23 +239,140 @@ Loop
     Break
   }
 }
+if (STOPMOD=1)
+{
+  Send {LButton Down}
+  Sleep 50
+}
 Send {LButton Up}
+if (STOPMOD=1)
+{
+  Sleep 10
+  Send {Esc}
+  HideMenu()
+}
+BlockInput, Off
 return
+
+MouseXY(x,y) ;【鼠标移动】
+{
+  DllCall("mouse_event",uint,1,int,x,int,y,uint,0,int,0)
+}
+
+HideMenu(){
+  MouseGetPos, OX, OY
+  JS:=A_TickCount
+  Loop
+  {
+    Sleep 10
+    if (A_TickCount-JS>350)
+    {
+      Break
+    }
+    if (NotSingleClick=1)
+    {
+      return
+    }
+  }
+  DllCall("SetCursorPos", "int", 640, "int", 140)
+  Sleep 450
+  Send {LButton Down}
+  Sleep 50
+  MouseXY(400, 100)
+  Sleep 100
+  Send {LButton Up}
+  Sleep 30
+  MouseMove, OX, OY
+}
 
 ~5::
 if (STOPMOD=0)
 {
+  BlockInput, On
   STOPMOD:=1
   Send {Esc}
+  Sleep 100
+  MouseGetPos, OX, OY
+  DllCall("SetCursorPos", "int", 640, "int", 140)
+  Sleep 250
+  Send {LButton Down}
+  Sleep 50
+  MouseXY(400, 100)
+  Sleep 100
+  Send {LButton Up}
+  Sleep 30
+  MouseMove, OX, OY
+  BlockInput, Off
 }
 else
 {
+  BlockInput, On
   STOPMOD:=0
   Send {Esc}
+  BlockInput, Off
+}
+return
+
+~6::
+if (STOPMOD=1)
+{
+  BlockInput, On
+  STOPMOD:=1
+  Send {Esc}
+  Sleep 100
+  MouseGetPos, OX, OY
+  DllCall("SetCursorPos", "int", 640, "int", 140)
+  Sleep 250
+  Send {LButton Down}
+  Sleep 50
+  MouseXY(400, 100)
+  Sleep 100
+  Send {LButton Up}
+  Sleep 30
+  MouseMove, OX, OY
+  BlockInput, Off
+}
+else
+{
+  BlockInput, On
+  Send {Esc}
+  BlockInput, Off
+}
+return
+
+~7::
+BlockInput, On
+MouseGetPos, OX, OY
+DllCall("SetCursorPos", "int", 640, "int", 140)
+Sleep 150
+Send {LButton Down}
+Sleep 50
+MouseXY(400, 100)
+Sleep 100
+Send {LButton Up}
+Sleep 30
+MouseMove, OX, OY
+BlockInput, Off
+return
+
+~Esc::
+if (STOPMOD=1)
+{
+  STOPMOD:=0
 }
 return
 
 ~q::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -224,12 +387,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, q
 return
 
 ~w::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -244,12 +418,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, w
 return
 
 ~e::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -264,12 +449,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, e
 return
 
 ~r::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -284,12 +480,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, r
 return
 
 ~t::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -304,12 +511,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, t
 return
 
 ~a::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -324,12 +542,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, a
 return
 
 ~s::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -344,12 +573,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, s
 return
 
 ~d::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -364,12 +604,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, d
 return
 
 ~f::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -384,12 +635,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, f
 return
 
 ~g::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -404,12 +666,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, g
 return
 
 ~z::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -424,12 +697,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, z
 return
 
 ~x::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -444,12 +728,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, x
 return
 
 ~c::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -464,12 +759,23 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, c
 return
 
 ~v::
+if (A_TickCount-KeyDownJS<350) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
 BlockInput, On
 if (STOPMOD=1)
 {
@@ -484,6 +790,7 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  HideMenu()
 }
 BlockInput, Off
 KeyWait, v
