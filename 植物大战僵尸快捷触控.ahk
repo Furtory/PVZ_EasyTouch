@@ -111,6 +111,7 @@ SoundPlay, Speech On.wav
 if (WinExist("ahk_exe PlantsVsZombies.exe")!=0)
 {
   WinActivate, ahk_exe PlantsVsZombies.exe
+  gosub 快捷键提示
 }
 else
 {
@@ -150,6 +151,7 @@ else
           Sleep 30
           if (WinExist("ahk_exe PlantsVsZombies.exe")!=0x0)
           {
+            gosub 快捷键提示
             Run %修改器目录%, , , 修改器ID
             Break
           }
@@ -168,18 +170,24 @@ else
           ToolTip, 游戏启动完成!等待修改器启动中...%修改器ID%
           Sleep 30
           if (WinActive(ahk_pid %修改器ID%)!=0x0)
+          WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+          WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
+          Loop
           {
-            ToolTip 修改器启动完成
-            Sleep 10000
-            ToolTip 已调整修改器位置
-            WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-            WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
-            Sleep 1000
-            Break
-          }
-          else
-          {
-            WinActivate, ahk_pid %修改器ID%
+            ToolTip 修改器启动中...
+            WinGetPos, 修改器X, 修改器Y, , , ahk_pid %修改器ID%
+            if (修改器X!=GameX+GameW+10) or (修改器Y!=GameY)
+            {
+              WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+              WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
+            }
+            else if (修改器X=GameX+GameW+10) and (修改器Y=GameY)
+            {
+              ToolTip 修改器启动完成
+              WinActivate, ahk_pid %修改器ID%
+              Sleep 1000
+              Break, 2
+            }
           }
           
           if (A_TickCount-JS>10000)
@@ -200,8 +208,23 @@ else
 }
 return
 
+~LButton::
+WinGetPos, OGameX, OGameY, OGameW, OGameH, ahk_exe PlantsVsZombies.exe
+KeyWait, LButton
+WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+if (GameX!=OGameX) or (GameY!=OGameY)
+{
+  gosub 快捷键提示
+}
+if (关联启动修改器=1)
+{
+  WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+  WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
+}
+return
+
 使用教程:
-MsgBox, , 杂交版快捷触控, 黑钨重工出品 免费开源 请勿商用 侵权必究`n快捷键提示设置方法:`n手机端请搭配Winlator的输入控制使用,导入icp文件后再打开模拟器`n电脑端仅支持窗口模式下显示,如果显示有问题可以在右键菜单中尝试兼容模式`n长按数字1设置左边卡槽位置`n长按数字4设置右边卡槽位置`n`n使用教程:`n可以使用外接键盘`n数字1瞄准键 铲子 可在自动暂停模式下铲掉鼠标下的植物`n数字4箭头下 左键 可在自动暂停模式下长按控制加农炮`n数字5暂停 自动暂停快速种植模式`n数字6回复 自动暂停失败重新暂停`n数字7隐藏 如果菜单没有隐藏重新隐藏
+MsgBox, , 杂交版快捷触控, 黑钨重工出品 免费开源 请勿商用 侵权必究`n快捷键提示设置方法:`n手机端请搭配Winlator的输入控制使用,导入icp文件后再打开模拟器`n电脑端仅支持窗口模式下显示,如果显示有问题可以在右键菜单中尝试兼容模式`n长按数字1设置左边卡槽位置`n长按数字4设置右边卡槽位置`n`n使用教程:`n可以使用外接键盘`n数字1瞄准键 铲子 可在自动暂停模式下铲掉鼠标下的植物`n空格键箭头下 左键 可在自动暂停模式下长按控制加农炮`n数字5暂停 自动暂停快速种植模式`n数字6回复 手机端自动暂停失败重新暂停`n数字7隐藏 如果菜单没有隐藏重新隐藏`nF2 重新显示提示`n在全屏模式下 自动暂停需要在菜单处长按右键设置`n`n因为新的功能模拟器的APi不支持所以后续将不会再为手机端进行适配
 return
 
 重启软件:
@@ -443,32 +466,6 @@ if (STOPMOD=1)
 {
   Send {Esc}
   Sleep 50
-  
-  WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-  if (GameH<700)
-  {
-    Loop 5
-    {
-      ST:=0
-      t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX, GameY, GameX+GameW, GameY+GameH, 0.3, 0.3, Text, , , , 20, 20))
-      {
-        ST:= % FindText().Ocr(Ok).text
-      }
-      if (ST=1)
-      {
-        Break
-      }
-      else
-      {
-        Send {Esc}
-        Sleep 50
-      }
-      HS:=A_TickCount-t1
-      ToolTip, 耗时%HS%ms
-    }
-    ToolTip
-  }
 }
 Loop
 {
@@ -489,27 +486,6 @@ if (STOPMOD=1)
   Send {LButton}
   Sleep 10
   Send {Esc}
-  HideMenu()
-}
-KeyWait, 1
-return
-
-~4::
-if (A_TickCount-KeyDownJS<双击延迟) and (KeyDownJS!=0)
-{
-  NotSingleClick:=1
-  KeyDownJS:=A_TickCount
-}
-else
-{
-  NotSingleClick:=0
-  KeyDownJS:=A_TickCount
-}
-
-if (STOPMOD=1)
-{
-  Send {Esc}
-  Sleep 50
   
   WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
   if (GameH<700)
@@ -518,7 +494,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX, GameY, GameX+GameW, GameY+GameH, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -536,6 +512,29 @@ if (STOPMOD=1)
     }
     ToolTip
   }
+  
+  HideMenu()
+}
+KeyWait, 1
+return
+
+; ~4::
+space::
+if (A_TickCount-KeyDownJS<双击延迟) and (KeyDownJS!=0)
+{
+  NotSingleClick:=1
+  KeyDownJS:=A_TickCount
+}
+else
+{
+  NotSingleClick:=0
+  KeyDownJS:=A_TickCount
+}
+
+if (STOPMOD=1)
+{
+  Send {Esc}
+  Sleep 50
 }
 防误触()
 Send {LButton Down}
@@ -553,7 +552,7 @@ Loop
     NewRight()
     Break
   }
-  if !GetKeyState("4", "P")
+  if !GetKeyState("4", "P") and !GetKeyState("space", "P")
   {
     防误触()
     Break
@@ -569,6 +568,32 @@ if (STOPMOD=1)
 {
   Sleep 10
   Send {Esc}
+  
+  WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+  if (GameH<700)
+  {
+    Loop 5
+    {
+      ST:=0
+      t1:=A_TickCount, PX:=PY:=""
+      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      {
+        ST:= % FindText().Ocr(Ok).text
+      }
+      if (ST=1)
+      {
+        Break
+      }
+      else
+      {
+        Send {Esc}
+        Sleep 50
+      }
+      HS:=A_TickCount-t1
+      ToolTip, 耗时%HS%ms
+    }
+    ToolTip
+  }
   HideMenu()
 }
 KeyWait, 4
@@ -607,6 +632,7 @@ HideMenu(){
   }
   else
   {
+    CoordMode, Mouse, Client
     MouseMove, 435, 150, 0
   }
   Sleep 100
@@ -660,7 +686,7 @@ return
     ; ToolTip, GameX%GameX% GameY%GameY% GameW%GameW% GameH%GameH%`nMouseX%MouseX% MouseY%MouseY% MoveX%MoveX% MoveY%MoveY%
     BlockInput On
     MouseMove, MoveX, MoveY, 0
-    CoordMode, Client
+    CoordMode, Mouse, Client
     WinActivate, ahk_exe PlantsVsZombies.exe
     BlockInput Off
   }
@@ -668,6 +694,7 @@ return
 }
 
 ~5::
+CoordMode, Mouse, Client
 if (STOPMOD=0)
 {
   WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
@@ -682,7 +709,7 @@ if (STOPMOD=0)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX, GameY, GameX+GameW, GameY+GameH, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -709,6 +736,7 @@ if (STOPMOD=0)
   }
   else
   {
+    CoordMode, Mouse, Client
     MouseMove, 435, 150, 0
   }
   Sleep 100
@@ -747,7 +775,7 @@ if (STOPMOD=0)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX, GameY, GameX+GameW, GameY+GameH, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -774,6 +802,7 @@ if (STOPMOD=0)
   }
   else
   {
+    CoordMode, Mouse, Client
     MouseMove, 435, 150, 0
   }
   Sleep 100
@@ -805,6 +834,7 @@ if (GameH>=700)
 }
 else
 {
+  CoordMode, Mouse, Client
   MouseMove, 435, 150, 0
 }
 Sleep 100
@@ -827,6 +857,7 @@ if (STOPMOD=1)
 return
 
 F2::
+快捷键提示:
 WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
 if (兼容模式=0)
 {
@@ -1472,7 +1503,7 @@ if (STOPMOD=1)
     Loop 5
     {
       ST:=0
-     t1:=A_TickCount, PX:=PY:=""
+      t1:=A_TickCount, PX:=PY:=""
       if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
