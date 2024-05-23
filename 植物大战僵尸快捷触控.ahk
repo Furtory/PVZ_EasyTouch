@@ -31,12 +31,16 @@ CoordMode, Mouse, Client
 STOPMOD:=0
 KeyDownJS:=0
 
-Text:="|<1>*77$56.000zzn000001T00S00000y001s0000kE003U000M00006000A00000M0060000zX0030zU0TwM01Uzw07zX00kzz03zsk08zzs1zra04Dzz0zzRU27zzkDztQ1Xzzw7zzX0MvzzVzzwMADzzsTzz637zzy7zzklVzzzVzzwAMTzzsTzz3i7zzz7zzktUzzzVzzwiQDzzsTzz/n1zzw3zznwsDzz0zzsz7VzzU7zwTUw7zksTy7k7kzUC1y3w1w007U20z0Q003w00DUQ000z000sA000Ds007a0007y000NU3a1zk007M3zUSw001w7zk061w1xbzw000zXzQjz0003zznzz31UETzwTzUkM43zy3ysE400zw00A4108Dk001X002Ds000Rk07zw0003zLzzz0000Tzzzz00000Tzz0008"
+Text:="|<1>*77$25.szb7kDW0zXVwDnsz7lwTVnyDsyT7wT7XwDllyDssz7swT7sQ071y0Dk"
+PX1:=390
+PY1:=260
+PX2:=430
+PY2:=310
 
-
-; Menu, Tray, NoStandard ;不显示默认的AHK右键菜单
+Menu, Tray, NoStandard ;不显示默认的AHK右键菜单
 Menu, Tray, Add, 使用教程, 使用教程 ;添加新的右键菜单
 Menu, Tray, Add, 
+Menu, Tray, Add, 快捷键提示, 快捷键提示开关 ;添加新的右键菜单
 Menu, Tray, Add, 快捷键提示兼容模式, 兼容模式 ;添加新的右键菜单
 Menu, Tray, Add,
 Menu, Tray, Add, 游戏目录设置, 游戏目录设置 ;添加新的右键菜单
@@ -56,6 +60,12 @@ IfExist, %A_ScriptDir%\设置.ini ;如果配置文件存在则读取
   IniRead, Y, 设置.ini, 设置, Y
   IniRead, StopMenuX, 设置.ini, 设置, StopMenuX
   IniRead, StopMenuY, 设置.ini, 设置, StopMenuY
+  
+  IniRead, 快捷键提示, 设置.ini, 设置, 快捷键提示
+  if (快捷键提示=1)
+  {
+    Menu, Tray, Check, 快捷键提示 ;右键菜单打勾
+  }
   
   IniRead, 兼容模式, 设置.ini, 设置, 兼容模式
   if (兼容模式=1)
@@ -94,6 +104,9 @@ else
   StopMenuY:=0
   IniWrite, %StopMenuY%, 设置.ini, 设置, StopMenuY
   
+  快捷键提示:=1
+  IniWrite, %快捷键提示%, 设置.ini, 设置, 快捷键提示
+  
   兼容模式:=0
   IniWrite, %兼容模式%, 设置.ini, 设置, 兼容模式
   
@@ -108,123 +121,125 @@ else
   IniWrite, %修改器目录%, 设置.ini, 设置, 修改器目录
 }
 SoundPlay, Speech On.wav
+
 if (WinExist("ahk_exe PlantsVsZombies.exe")!=0)
 {
   WinActivate, ahk_exe PlantsVsZombies.exe
-  gosub 快捷键提示
-}
-else
-{
-  if (关联启动游戏=1)
+  if (快捷键提示=1)
   {
-    if (游戏目录="") or (游戏目录="ERROR") or (游戏目录="启动.bat")
-    {
-      MsgBox 您尚未设置游戏关联启动目录`n请打开游戏启动器文件`n`n可以在右键菜单中重新设置
-      gosub 游戏目录设置
-      MsgBox, 4, 启动游戏, 是否现在启动游戏?
-      IfMsgBox Yes
-        Run %游戏目录%
-    }
-    else
-    {
+    gosub 快捷键提示
+  }
+}
+else if (关联启动游戏=1)
+{
+  if (游戏目录="") or (游戏目录="ERROR") or (游戏目录="启动.bat")
+  {
+    MsgBox 您尚未设置游戏关联启动目录`n请打开游戏启动器文件`n`n可以在右键菜单中重新设置
+    gosub 游戏目录设置
+    MsgBox, 4, 启动游戏, 是否现在启动游戏?
+    IfMsgBox Yes
       Run %游戏目录%
-    }
   }
-  if (关联启动修改器=1)
+  else
   {
-    if (修改器目录="") or (修改器目录="ERROR")
-    {
-      MsgBox 您尚未设置修改器关联启动目录`n请打开修改器启动器文件`n`n可以在右键菜单中重新设置
-      gosub 修改器目录设置
-      MsgBox, 4, 启动修改器, 是否现在启动修改器?
-      IfMsgBox Yes
-        Run %修改器目录%
-    }
-    else
-    {
-      if (关联启动游戏=1)
-      {
-        JS:=A_TickCount
-        Loop
-        {
-          ToolTip, 等待游戏启动中...
-          Sleep 30
-          if (WinExist("ahk_exe PlantsVsZombies.exe")!=0x0)
-          {
-            gosub 快捷键提示
-            Run %修改器目录%, , , 修改器ID
-            Break
-          }
-          if (A_TickCount-JS>10000)
-          {
-            ToolTip
-            MsgBox, , ,游戏启动超时!`n请手动启动游戏和修改器, 3
-            Break
-          }
-        }
-        ToolTip
-        
-        JS:=A_TickCount
-        Loop
-        {
-          ToolTip, 游戏启动完成!等待修改器启动中...%修改器ID%
-          Sleep 30
-          if (WinActive(ahk_pid %修改器ID%)!=0x0)
-          WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-          WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
-          Loop
-          {
-            ToolTip 修改器启动中...
-            WinGetPos, 修改器X, 修改器Y, , , ahk_pid %修改器ID%
-            if (修改器X!=GameX+GameW+10) or (修改器Y!=GameY)
-            {
-              WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-              WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
-            }
-            else if (修改器X=GameX+GameW+10) and (修改器Y=GameY)
-            {
-              ToolTip 修改器启动完成
-              WinActivate, ahk_pid %修改器ID%
-              Sleep 1000
-              Break, 2
-            }
-          }
-          
-          if (A_TickCount-JS>10000)
-          {
-            ToolTip
-            MsgBox, , ,修改器启动超时!`n请手动启动修改器, 3
-            Break
-          }
-        }
-        ToolTip
-      }
-      else
-      {
-        Run %修改器目录%
-      }
-    }
+    Run %游戏目录%
   }
 }
-return
 
-~LButton::
-WinGetPos, OGameX, OGameY, OGameW, OGameH, ahk_exe PlantsVsZombies.exe
-KeyWait, LButton
-WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-if (GameX!=OGameX) or (GameY!=OGameY)
-{
-  gosub 快捷键提示
-}
 if (关联启动修改器=1)
 {
-  WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-  WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
+  if (修改器目录="") or (修改器目录="ERROR")
+  {
+    MsgBox 您尚未设置修改器关联启动目录`n请打开修改器启动器文件`n`n可以在右键菜单中重新设置
+    gosub 修改器目录设置
+    MsgBox, 4, 启动修改器, 是否现在启动修改器?
+    IfMsgBox Yes
+      Run %修改器目录%
+  }
+  else
+  {
+    if (关联启动游戏=1)
+    {
+      IniRead, 修改器ID, 设置.ini, 设置, 修改器ID
+      if WinExist("ahk_pid "修改器ID)
+      {
+        WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+        WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
+        WinActivate, ahk_pid %修改器ID%
+        WinActivate, ahk_exe PlantsVsZombies.exe
+        return
+      }
+      
+      JS:=A_TickCount
+      Loop
+      {
+        ToolTip, 等待游戏启动中...
+        Sleep 30
+        if (WinExist("ahk_exe PlantsVsZombies.exe")!=0x0)
+        {
+          if (快捷键提示=1)
+          {
+            gosub 快捷键提示
+          }
+          Run %修改器目录%, , , 修改器ID
+          IniWrite, %修改器ID%, 设置.ini, 设置, 修改器ID
+          Break
+        }
+        if (A_TickCount-JS>10000)
+        {
+          ToolTip
+          MsgBox, , ,游戏启动超时!`n请手动启动游戏和修改器, 3
+          Break
+        }
+      }
+      ToolTip
+      
+      JS:=A_TickCount
+      Loop
+      {
+        ToolTip, 游戏启动完成!等待修改器启动中...%修改器ID%
+        Sleep 30
+        if (WinActive(ahk_pid %修改器ID%)!=0x0)
+        WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+        WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
+        Loop
+        {
+          ToolTip 修改器启动中...
+          WinGetPos, 修改器X, 修改器Y, , , ahk_pid %修改器ID%
+          if (修改器X!=GameX+GameW+10) or (修改器Y!=GameY)
+          {
+            WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+            WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
+          }
+          else if (修改器X=GameX+GameW+10) and (修改器Y=GameY)
+          {
+            ToolTip 修改器启动完成
+            WinActivate, ahk_pid %修改器ID%
+            WinActivate, ahk_exe PlantsVsZombies.exe
+            Sleep 1000
+            Break, 2
+          }
+        }
+        
+        if (A_TickCount-JS>10000)
+        {
+          ToolTip
+          MsgBox, , ,修改器启动超时!`n请手动启动修改器, 3
+          Break
+        }
+      }
+      ToolTip
+    }
+    else
+    {
+      Run %修改器目录%
+    }
+  }
 }
 return
 
 使用教程:
-MsgBox, , 杂交版快捷触控, 黑钨重工出品 免费开源 请勿商用 侵权必究`n快捷键提示设置方法:`n手机端请搭配Winlator的输入控制使用,导入icp文件后再打开模拟器`n电脑端仅支持窗口模式下显示,如果显示有问题可以在右键菜单中尝试兼容模式`n长按数字1设置左边卡槽位置`n长按数字4设置右边卡槽位置`n`n使用教程:`n可以使用外接键盘`n数字1瞄准键 铲子 可在自动暂停模式下铲掉鼠标下的植物`n空格键箭头下 左键 可在自动暂停模式下长按控制加农炮`n数字5暂停 自动暂停快速种植模式`n数字6回复 手机端自动暂停失败重新暂停`n数字7隐藏 如果菜单没有隐藏重新隐藏`nF2 重新显示提示`n在全屏模式下 自动暂停需要在菜单处长按右键设置`n`n因为新的功能模拟器的APi不支持所以后续将不会再为手机端进行适配
+MsgBox, , 杂交版快捷触控, 黑钨重工出品 免费开源 请勿商用 侵权必究`n快捷键提示设置方法:`n手机端请搭配Winlator的输入控制使用,导入icp文件后再打开模拟器`n电脑端仅支持窗口模式下显示,如果显示有问题可以在右键菜单中尝试兼容模式`n长按数字1设置左边卡槽位置`n长按数字4设置右边卡槽位置`n`n使用教程:`n可以使用外接键盘`nTab瞄准键 铲子 可在自动暂停模式下铲掉鼠标下的植物`n空格键箭头下 非自动暂停模式下相当于左键 自动暂停模式下按下点击加农炮再移动到需要发射的位置松开即可发射`n数字5暂停 自动暂停快速种植模式`n数字6回复 手机端自动暂停失败重新暂停`n数字7隐藏 如果菜单没有隐藏重新隐藏`n在全屏模式下 自动暂停需要在菜单处长按右键设置`n鼠标后退键 键盘波浪键 重映射为Esc`n鼠标前进键 可以快捷打开自动暂停模式`n`n因为新的功能模拟器的APi不支持所以后续将不会再为手机端进行适配
 return
 
 重启软件:
@@ -232,6 +247,25 @@ Reload
 
 退出软件:
 ExitApp
+
+快捷键提示开关:
+Critical, On
+if (快捷键提示=1)
+{
+  快捷键提示:=0
+  Gui, TT:Destroy
+  IniWrite, %快捷键提示%, 设置.ini, 设置, 快捷键提示
+  Menu, Tray, UnCheck, 快捷键提示 ;右键菜单不打勾
+}
+else
+{
+  快捷键提示:=1
+  gosub 快捷键提示
+  IniWrite, %快捷键提示%, 设置.ini, 设置, 快捷键提示
+  Menu, Tray, Check, 快捷键提示 ;右键菜单打勾
+}
+Critical, Off
+return
 
 兼容模式:
 Critical, On
@@ -427,6 +461,35 @@ Class 后台 {
   ;-- 类结束
 }
 
+~LButton::
+MouseGetPos, , , MouseID
+WinGet, MouseProcessName, ProcessName, ahk_id %MouseID%
+if (WinActive("ahk_exe PlantsVsZombies.exe")=0) and (MouseProcessName!="PlantsVsZombies.exe")
+{
+  ;ToolTip %MouseProcessName%
+  Gui, TT:Destroy
+  return
+}
+else if (WinExist("提示")=0)
+{
+  gosub 快捷键提示
+}
+WinGetPos, OGameX, OGameY, OGameW, OGameH, ahk_exe PlantsVsZombies.exe
+KeyWait, LButton
+WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+if (GameX!=OGameX) or (GameY!=OGameY)
+{
+  gosub 快捷键提示
+}
+if (关联启动修改器=1)
+{
+  WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+  WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
+  WinActivate, ahk_pid %修改器ID%
+  WinActivate, ahk_exe PlantsVsZombies.exe
+}
+return
+
 #IfWinActive ahk_exe PlantsVsZombies.exe
 ~RButton::
 ; 防误触()
@@ -450,6 +513,7 @@ Loop
 KeyWait, RButton
 return
 
+~Tab::
 ~1::
 if (A_TickCount-KeyDownJS<双击延迟) and (KeyDownJS!=0)
 {
@@ -462,11 +526,13 @@ else
   KeyDownJS:=A_TickCount
 }
 JS:=A_TickCount
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 50
 }
+
+Send {1}
 Loop
 {
   Sleep 30
@@ -475,7 +541,7 @@ Loop
     NewLeft()
     Break
   }
-  if !GetKeyState("1", "P")
+  if !GetKeyState("Tab", "P")
   {
     Break
   }
@@ -485,37 +551,39 @@ if (STOPMOD=1)
   防误触()
   Send {LButton}
   Sleep 10
-  Send {Esc}
   
-  WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-  if (GameH<700)
+  if !GetKeyState("space", "P")
   {
-    Loop 5
+    Send {Esc}
+    WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+    if (GameH<700)
     {
-      ST:=0
-      t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      Loop 5
       {
-        ST:= % FindText().Ocr(Ok).text
+        ST:=0
+        t1:=A_TickCount, PX:=PY:=""
+        if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
+        {
+          ST:= % FindText().Ocr(Ok).text
+        }
+        if (ST=1)
+        {
+          Break
+        }
+        else
+        {
+          Send {Esc}
+          Sleep 50
+        }
+        HS:=A_TickCount-t1
+        ToolTip, 耗时%HS%ms
       }
-      if (ST=1)
-      {
-        Break
-      }
-      else
-      {
-        Send {Esc}
-        Sleep 50
-      }
-      HS:=A_TickCount-t1
-      ToolTip, 耗时%HS%ms
+      ToolTip
     }
-    ToolTip
+    HideMenu()
   }
-  
-  HideMenu()
 }
-KeyWait, 1
+KeyWait, Tab
 return
 
 ; ~4::
@@ -576,7 +644,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -638,7 +706,7 @@ HideMenu(){
   Sleep 100
   Send {LButton Down}
   Sleep 30
-  MouseXY(450, 120)
+  MouseXY(250, 70)
   Sleep 50
   Send {LButton Up}
   Sleep 30
@@ -693,7 +761,12 @@ return
   return
 }
 
+~XButton2::
 ~5::
+if GetKeyState("space", "P")
+{
+  return
+}
 CoordMode, Mouse, Client
 if (STOPMOD=0)
 {
@@ -709,7 +782,7 @@ if (STOPMOD=0)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -742,7 +815,7 @@ if (STOPMOD=0)
   Sleep 100
   Send {LButton Down}
   Sleep 30
-  MouseXY(450, 120)
+  MouseXY(250, 70)
   Sleep 50
   Send {LButton Up}
   Sleep 30
@@ -760,6 +833,10 @@ KeyWait, 5
 return
 
 ~6::
+if GetKeyState("space", "P")
+{
+  return
+}
 if (STOPMOD=0)
 {
   STOPMOD:=1
@@ -775,7 +852,7 @@ if (STOPMOD=0)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -808,7 +885,7 @@ if (STOPMOD=0)
   Sleep 100
   Send {LButton Down}
   Sleep 30
-  MouseXY(450, 120)
+  MouseXY(250, 70)
   Sleep 50
   Send {LButton Up}
   Sleep 30
@@ -825,6 +902,10 @@ KeyWait, 6
 return
 
 ~7::
+if GetKeyState("space", "P")
+{
+  return
+}
 BlockInput, On
 MouseGetPos, OX, OY
 WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
@@ -840,7 +921,7 @@ else
 Sleep 100
 Send {LButton Down}
 Sleep 30
-MouseXY(450, 120)
+MouseXY(250, 70)
 Sleep 50
 Send {LButton Up}
 Sleep 30
@@ -849,6 +930,9 @@ BlockInput, Off
 KeyWait, 7
 return
 
+~`::
+~XButton1::
+Send {Esc}
 ~Esc::
 if (STOPMOD=1)
 {
@@ -856,11 +940,16 @@ if (STOPMOD=1)
 }
 return
 
-F2::
+;F2::
 快捷键提示:
 WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
 if (兼容模式=0)
 {
+  if (GameH<700)
+  {
+    X1:=101
+    X2:=764
+  }
   ToolTip, , , , 2
   ToolTip, , , , 3
   ToolTip, , , , 4
@@ -881,7 +970,7 @@ if (兼容模式=0)
   }
   WinActivate, ahk_exe PlantsVsZombies.exe
   Gui TT:+AlwaysOnTop
-  Gui TT:Font, s13 c0ffff Bold, Verdana
+  Gui TT:Font, s13 cff0000 Bold, Verdana
   Gui TT:Add, Text, w100 x0 y0 BackgroundTrans, Q ;字体颜色
   WX:=Round(abs(X2-X1)/13*1)
   Gui TT:Add, Text, w100 x%WX% y0 BackgroundTrans, W ;字体颜色
@@ -911,8 +1000,8 @@ if (兼容模式=0)
   Gui TT:Add, Text, w100 x%VX% y0 BackgroundTrans, V ;字体颜色
   Gui TT:Show, W1 H1 X1 Y1, 提示 ;宽50（-6） 高30（+29）
   WinSet, Style, -0xC00000, 提示 ;关闭标题栏
-  Gui TT:Color, 0a0ff ;窗口背景颜色
-  WinSet, TransColor, 0a0ff, 提示 ;使指定窗口背景颜色变透明
+  Gui TT:Color, 660000 ;窗口背景颜色
+  WinSet, TransColor, 660000, 提示 ;使指定窗口背景颜色变透明
   WinGet, TTID, ID, 提示
   WinMove, ahk_id %TTID%, , GameX+Round(GameW/8)+5, GameY+83, abs(X2-X1)+30, 40
   防误触()
@@ -951,7 +1040,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -960,7 +1049,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1, Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -973,7 +1062,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1010,7 +1099,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1019,7 +1108,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*1), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1032,7 +1121,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1069,7 +1158,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1078,7 +1167,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*2), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1091,7 +1180,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1128,7 +1217,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1137,7 +1226,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*3), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1150,7 +1239,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1187,7 +1276,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1196,7 +1285,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*4), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1209,7 +1298,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1246,7 +1335,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1255,7 +1344,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*5), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1268,7 +1357,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1305,7 +1394,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1314,7 +1403,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*6), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1327,7 +1416,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1364,7 +1453,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1373,7 +1462,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*7), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1386,7 +1475,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1423,7 +1512,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1432,7 +1521,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*8), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1445,7 +1534,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1482,7 +1571,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1491,7 +1580,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*9), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1504,7 +1593,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1541,7 +1630,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1550,7 +1639,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*10), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1563,7 +1652,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1600,7 +1689,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1609,7 +1698,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*11), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1622,7 +1711,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1659,7 +1748,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1668,7 +1757,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X1+Round(Abs((X2-X1))/13*12), Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1681,7 +1770,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
@@ -1718,7 +1807,7 @@ else
   KeyDownJS:=A_TickCount
 }
 BlockInput, On
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Send {Esc}
   Sleep 30
@@ -1727,7 +1816,7 @@ MouseGetPos, , , WinID
 后台.点击左键(WinID, X2, Y)
 Sleep 30
 Send {LButton}
-if (STOPMOD=1)
+if (STOPMOD=1) and !GetKeyState("space", "P")
 {
   Sleep 10
   Send {Esc}
@@ -1740,7 +1829,7 @@ if (STOPMOD=1)
     {
       ST:=0
       t1:=A_TickCount, PX:=PY:=""
-      if (ok:=FindText(PX, PY, GameX+400, GameY+70, GameX+475, GameY+135, 0.3, 0.3, Text, , , , 20, 20))
+      if (ok:=FindText(PX, PY, GameX+PX1, GameY+PY1, GameX+PX2, GameY+PY2, 0.3, 0.3, Text, , , , 20, 20))
       {
         ST:= % FindText().Ocr(Ok).text
       }
