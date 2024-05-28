@@ -483,10 +483,14 @@ if (GameX!=OGameX) or (GameY!=OGameY)
 }
 if (关联启动修改器=1)
 {
-  WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-  WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
-  WinActivate, ahk_pid %修改器ID%
-  WinActivate, ahk_exe PlantsVsZombies.exe
+  WinGetPos, 修改器X, 修改器Y, , , ahk_pid %修改器ID%
+  if (修改器X!=GameX+GameW+10) or (修改器Y!=GameY)
+  {
+    WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+    WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
+    WinActivate, ahk_pid %修改器ID%
+    WinActivate, ahk_exe PlantsVsZombies.exe
+  }
 }
 return
 
