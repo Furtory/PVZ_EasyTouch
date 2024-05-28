@@ -245,6 +245,7 @@ return
 重启软件:
 Reload
 
+F12::
 退出软件:
 ExitApp
 
@@ -461,26 +462,19 @@ Class 后台 {
   ;-- 类结束
 }
 
-~LButton::
+~$LButton::
 MouseGetPos, , , MouseID
 WinGet, MouseProcessName, ProcessName, ahk_id %MouseID%
 if (WinActive("ahk_exe PlantsVsZombies.exe")=0) and (MouseProcessName!="PlantsVsZombies.exe")
 {
   ;ToolTip %MouseProcessName%
+  BlockInput Off
   Gui, TT:Destroy
   return
-}
-else if (WinExist("提示")=0)
-{
-  gosub 快捷键提示
 }
 WinGetPos, OGameX, OGameY, OGameW, OGameH, ahk_exe PlantsVsZombies.exe
 KeyWait, LButton
 WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-if (GameX!=OGameX) or (GameY!=OGameY)
-{
-  gosub 快捷键提示
-}
 if (关联启动修改器=1)
 {
   WinGetPos, 修改器X, 修改器Y, , , ahk_pid %修改器ID%
@@ -489,8 +483,11 @@ if (关联启动修改器=1)
     WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
     WinMove ahk_pid %修改器ID%, , GameX+GameW+10, GameY
     WinActivate, ahk_pid %修改器ID%
-    WinActivate, ahk_exe PlantsVsZombies.exe
   }
+}
+if (GameX!=OGameX) or (GameY!=OGameY) or (WinExist("提示")=0)
+{
+  gosub 快捷键提示
 }
 return
 
@@ -775,7 +772,6 @@ CoordMode, Mouse, Client
 if (STOPMOD=0)
 {
   WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-  BlockInput, On
   STOPMOD:=1
   
   Send {Esc}
@@ -807,6 +803,7 @@ if (STOPMOD=0)
   
   Sleep 30
   MouseGetPos, OX, OY
+  BlockInput, MouseMove
   if (GameH>=700)
   {
     DllCall("SetCursorPos", "int", StopMenuX, "int", StopMenuY)
@@ -824,14 +821,13 @@ if (STOPMOD=0)
   Send {LButton Up}
   Sleep 30
   MouseMove, OX, OY, 0
-  BlockInput, Off
+  Sleep 50
+  BlockInput, MouseMoveOff
 }
 else
 {
-  BlockInput, On
   STOPMOD:=0
   Send {Esc}
-  BlockInput, Off
 }
 KeyWait, 5
 return
@@ -845,7 +841,6 @@ if (STOPMOD=0)
 {
   STOPMOD:=1
   WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
-  BlockInput, On
   STOPMOD:=1
   
   Send {Esc}
@@ -877,6 +872,7 @@ if (STOPMOD=0)
   
   Sleep 30
   MouseGetPos, OX, OY
+  BlockInput, MouseMove
   if (GameH>=700)
   {
     DllCall("SetCursorPos", "int", StopMenuX, "int", StopMenuY)
@@ -894,13 +890,11 @@ if (STOPMOD=0)
   Send {LButton Up}
   Sleep 30
   MouseMove, OX, OY, 0
-  BlockInput, Off
+  BlockInput, MouseMoveOff
 }
 else
 {
-  BlockInput, On
   Send {Esc}
-  BlockInput, Off
 }
 KeyWait, 6
 return
@@ -910,9 +904,9 @@ if GetKeyState("space", "P")
 {
   return
 }
-BlockInput, On
 MouseGetPos, OX, OY
 WinGetPos, GameX, GameY, GameW, GameH, ahk_exe PlantsVsZombies.exe
+BlockInput, MouseMove
 if (GameH>=700)
 {
   DllCall("SetCursorPos", "int", StopMenuX, "int", StopMenuY)
@@ -930,7 +924,7 @@ Sleep 50
 Send {LButton Up}
 Sleep 30
 MouseMove, OX, OY, 0
-BlockInput, Off
+BlockInput, MouseMoveOff
 KeyWait, 7
 return
 
@@ -1008,6 +1002,10 @@ if (兼容模式=0)
   WinSet, TransColor, 660000, 提示 ;使指定窗口背景颜色变透明
   WinGet, TTID, ID, 提示
   WinMove, ahk_id %TTID%, , GameX+Round(GameW/8)+5, GameY+83, abs(X2-X1)+30, 40
+  if (WinActive("ahk_exe PlantsVsZombies.exe")=0)
+  {
+    WinActivate, ahk_exe PlantsVsZombies.exe
+  }
   防误触()
 }
 else
